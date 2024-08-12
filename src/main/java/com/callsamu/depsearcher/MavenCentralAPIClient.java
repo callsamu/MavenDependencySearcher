@@ -35,6 +35,8 @@ public class MavenCentralAPIClient {
 	public DependencyData parse(String json) throws Exception {
 		JsonNode root = this.mapper.readTree(json);
 		JsonNode object = root.get("response").get("docs");
+
+		@SuppressWarnings("unchecked")
 		List<DependencyData> results = this.mapper.treeToValue(object, List.class);
 
 		return results.get(0);
@@ -62,7 +64,19 @@ public class MavenCentralAPIClient {
 		return response.body();
 	}
 
-	public DependencyData get(URI uri) {
-		return new DependencyData("test", "test", "test");
+	public DependencyData get(String groupID, String ArtifactID) throws Exception {
+		URI uri = UriBuilder
+			.fromPath(this.origin)
+			.path(this.path)
+			.path("g:" + groupID + " AND " + "a:" + ArtifactID)
+			.path(ArtifactID)
+			.build();
+
+		try {
+			return this.parse(this.fetch(uri));
+		}
+		catch (Exception e) {
+			throw e;
+		}
 	}
 }
