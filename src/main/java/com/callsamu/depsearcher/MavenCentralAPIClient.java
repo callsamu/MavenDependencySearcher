@@ -67,12 +67,13 @@ public class MavenCentralAPIClient {
 		return response.body();
 	}
 
-	public DependencyData get(String groupID, String ArtifactID) throws Exception {
+	public DependencyData get(String g, String a) throws Exception {
 		URI uri = UriBuilder
 			.fromPath(this.origin)
 			.path(this.path)
-			.path("g:" + groupID + " AND " + "a:" + ArtifactID)
-			.path(ArtifactID)
+			.queryParam("q", "g:" + g + " AND a:" + a)
+			.queryParam("rows", "1")
+			.queryParam("wt", "json")
 			.build();
 
 		try {
