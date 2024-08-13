@@ -9,6 +9,7 @@ import java.net.http.HttpResponse.BodyHandler;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.List;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -36,8 +37,10 @@ public class MavenCentralAPIClient {
 		JsonNode root = this.mapper.readTree(json);
 		JsonNode object = root.get("response").get("docs");
 
-		@SuppressWarnings("unchecked")
-		List<DependencyData> results = this.mapper.treeToValue(object, List.class);
+		List<DependencyData> results = this.mapper.treeToValue(
+			object, 
+			new TypeReference<List<DependencyData>>() {}
+		);
 
 		return results.get(0);
 	}
