@@ -17,18 +17,15 @@ import jakarta.ws.rs.core.UriBuilder;
 
 
 public class MavenCentralAPIClient {
-	private final String origin;
-	private final String path;
+	private final URI endpoint;
 	private final HttpClient client;
 	private final ObjectMapper mapper;
 
 	MavenCentralAPIClient(
-		String origin, 
-		String path,
+		URI endpoint,
 		HttpClient http
 	) {
-		this.origin = origin;
-		this.path = path;
+		this.endpoint = endpoint;
 		this.client = http;
 		this.mapper = new ObjectMapper();
 	}
@@ -68,9 +65,7 @@ public class MavenCentralAPIClient {
 	}
 
 	public DependencyData get(String g, String a) throws Exception {
-		URI uri = UriBuilder
-			.fromPath(this.origin)
-			.path(this.path)
+		URI uri = UriBuilder.fromUri(this.endpoint)
 			.queryParam("q", "g:" + g + " AND a:" + a)
 			.queryParam("rows", "1")
 			.queryParam("wt", "json")
