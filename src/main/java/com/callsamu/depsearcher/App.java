@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 
+import jakarta.ws.rs.core.UriBuilder;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -31,8 +32,9 @@ public class App implements Callable<Integer> {
 	@Override
 	public Integer call() throws Exception {
 		MavenCentralAPIClient client = new MavenCentralAPIClient(
-			"https://search.maven.org/",
-			"/solrsearch/select",
+			UriBuilder.
+				fromUri("https://search.maven.org/solrsearch/select").
+				build(),
 			HttpClient.newHttpClient()
 		);
 
