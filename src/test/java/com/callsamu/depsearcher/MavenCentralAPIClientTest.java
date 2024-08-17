@@ -2,101 +2,58 @@ package com.callsamu.depsearcher;
 
 import static org.junit.Assert.assertTrue;
 
+import java.io.InputStream;
 import java.net.http.HttpClient;
 
 import org.junit.Test;
 
+import okhttp3.HttpUrl;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
+
 
 public class MavenCentralAPIClientTest {
-
     @Test
-    public void shouldCorrectlyParse() {
+    public void shouldGetByGroupAndArtifact() throws Exception {
+		final String dataPath = "/group-artifact-query.json";
+		final var thisClass = MavenCentralAPIClientTest.class;
+
+		final String data;
+
+		try (final InputStream stream = thisClass.getResourceAsStream(dataPath)) {
+			data = new String(stream.readAllBytes());
+		}
+
+		final MockWebServer server = new MockWebServer();
+		server.enqueue(new MockResponse().setBody(data));
+
+		server.start();
+		
+		final HttpUrl url = server.url("/");
+		System.out.println(url.host());
+
+		final String wantGroup = "com.google.inject";
+		final String wantArtifact = "guice";
+
 		final HttpClient client = HttpClient.newHttpClient();
-		final MavenCentralAPIClient mvn = new MavenCentralAPIClient(
-			"https://repo1.maven.org", 
-			"/maven2", 
+		final DependencyData dep = new MavenCentralAPIClient(
+			url.uri(),
 			client
-		);
+		).get("com.google.inject", "guice");
 
-		final String data = """
-			"response": {
-				"docs": [
-					{
-						"a": "lombok",
-						"ec": [
-							".pom.sha256",
-							".jar.sha256"
-						],
-						"g": "name.remal.gradle-plugins.lombok",
-						"id": "name.remal.gradle-plugins.lombok:lombok",
-						"latestVersion": "2.2.7",
-						"p": "jar",
-						"repositoryId": "central",
-						"text": [
-							"name.remal.gradle-plugins.lombok",
-							"lombok",
-							".jar.sha256"
-						],
-						"timestamp": 1719939783583,
-						"versionCount": 20
-					},
-					{
-						"a": "lombok",
-						"ec": [
-							"-sources.jar.sha256",
-							".pom.sha256",
-							".jar.sha256"
-						],
-						"g": "org.projectlombok",
-						"id": "org.projectlombok:lombok",
-						"latestVersion": "1.18.34",
-						"p": "jar",
-						"repositoryId": "central",
-						"text": [
-							"org.projectlombok",
-							"-sources.jar.sha512",
-							".pom.sha256",
-							".jar.sha256"
-						],
-						"timestamp": 1719535553024,
-						"versionCount": 53
-					},
-				],
-				"numFound": 83,
-				"start": 0
-			},
-			"responseHeader": {
-				"QTime": 3,
-				"params": {
-					"core": "",
-					"defType": "dismax",
-					"fl": "id,g,a,latestVersion,p,ec,repositoryId,text,timestamp,versionCount",
-					"indent": "off",
-					"q": "lombok",
-					"qf": "text^20 g^5 a^10",
-					"rows": "5",
-					"sort": "score desc,timestamp desc,g asc,a asc",
-					"spellcheck": "true",
-					"spellcheck.count": "5",
-					"start": "",
-					"version": "2.2",
-					"wt": "json"
-				},
-				"status": 0
-			},
-			"spellcheck": {
-				"suggestions": []
-			}
-		}
-		""";
+		final RecordedRequest req = server.takeRequest();
+		final HttpUrl reqUrl = req.getRequestUrl();
 
-		try {
-			final DependencyData dep = mvn.parse(data);
-			assertTrue(dep.groupId().equals("org.projectlombok"));
-			assertTrue(dep.artifactId().equals("lombok"));
-			assertTrue(dep.version().equals("1.18.34"));
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		final String wantQuery = "g:"+wantGroup+" AND "+"a:"+wantArtifact;
+		assertTrue(reqUrl.queryParameter("q").equals(wantQuery));
+		System.out.println(dep);
+
+		assertTrue(dep.groupId().equals(wantGroup));
+		assertTrue(dep.artifactId().equals(wantArtifact));
+		assertTrue(dep.version().equals("7.0.0"));
+
+		server.shutdown();
+		server.close();
     }
 }
