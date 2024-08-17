@@ -16,7 +16,7 @@ public record DependencyData(
 	@JacksonXmlProperty(localName = "artifactId") 
 	String artifactId,
 
-	@JsonProperty("latestVersion") 
+	@JsonProperty("v") 
 	@JacksonXmlProperty(localName = "version") 
 	String version
 ){};
