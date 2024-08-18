@@ -5,12 +5,11 @@ import java.util.concurrent.Callable;
 
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fasterxml.jackson.dataformat.xml.ser.ToXmlGenerator;
 
 import jakarta.ws.rs.core.UriBuilder;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 
 @Command(
@@ -20,13 +19,7 @@ import picocli.CommandLine.Option;
 	description = "Searchs for dependencies in Maven Central"
 )
 public class App implements Callable<Integer> {
-	@Option(names = {"-g", "--group"}, description = "Group ID")
-	private String group;
-
-	@Option(names = {"-a", "--artifact"}, description = "Artifact ID")
-	private String artifact;
-
-	@Option(names = {"-q", "--query"}, description = "Any Query")
+	@Parameters(index = "0", description = "A query parameter to be used")
 	private String query;
 
 	@Override
@@ -42,7 +35,8 @@ public class App implements Callable<Integer> {
 		mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
 
 		try {
-			final DependencyData data = client.get(this.group, this.artifact);
+			final UserQuery q = UserQuery.fromString(query);
+			final DependencyData data = client.get(q);
 			final String r = mapper.writeValueAsString(data);
 			System.out.println(r);
 

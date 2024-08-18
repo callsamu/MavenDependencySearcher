@@ -64,9 +64,9 @@ public class MavenCentralAPIClient {
 		return response.body();
 	}
 
-	public DependencyData get(String g, String a) throws Exception {
+	public DependencyData get(UserQuery q) throws Exception {
 		URI uri = UriBuilder.fromUri(this.endpoint)
-			.queryParam("q", "g:" + g + " AND a:" + a)
+			.queryParam("q", q.toAPIQueryParam())
 			.queryParam("rows", "1")
 			.queryParam("wt", "json")
 			.build();
