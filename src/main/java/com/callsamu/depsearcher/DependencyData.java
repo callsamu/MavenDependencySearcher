@@ -8,15 +8,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JacksonXmlRootElement(localName = "dependency")
 public record DependencyData(
-	@JsonProperty("g") 
-	@JacksonXmlProperty(localName = "groupId") 
-	String groupId,
-
-	@JsonProperty("a") 
-	@JacksonXmlProperty(localName = "artifactId") 
-	String artifactId,
-
-	@JsonProperty("v") 
-	@JacksonXmlProperty(localName = "version") 
-	String version
-){};
+    @JsonProperty("g") @JacksonXmlProperty(localName = "groupId") String groupId,
+    @JsonProperty("a") @JacksonXmlProperty(localName = "artifactId") String artifactId,
+    @JsonProperty("v") @JacksonXmlProperty(localName = "version") String version) {}
+;
