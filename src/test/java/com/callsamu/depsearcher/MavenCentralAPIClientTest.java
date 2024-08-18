@@ -34,8 +34,8 @@ public class MavenCentralAPIClientTest {
     final String wantArtifact = "guice";
 
     final HttpClient client = HttpClient.newHttpClient();
-    final DependencyData dep =
-        new MavenCentralAPIClient(url.uri(), client).get("com.google.inject", "guice");
+    final UserQuery q = UserQuery.fromString(wantGroup + ":" + wantArtifact);
+    final DependencyData dep = new MavenCentralAPIClient(url.uri(), client).get(q);
 
     final RecordedRequest req = server.takeRequest();
     final HttpUrl reqUrl = req.getRequestUrl();
