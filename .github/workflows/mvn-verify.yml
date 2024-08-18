@@ -1,0 +1,51 @@
+name: Maven Check Formatting and Verify
+
+on:
+  workflow_dispatch:
+    branches:
+      - main
+      - master
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  format-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Install Maven
+        if: ${{ env.ACT }}
+        run : |
+          sudo apt-get update
+          sudo apt-get install -y maven
+
+      - name: Install Dependencies
+        run: mvn dependency:resolve
+
+      - name: Check formatting
+        run: |
+          mvn fmt:check || (echo "Code formatting check failed" && exit 1)
+
+      - name: Build and Test
+        run: mvn verify
+
+      - name: Upload formatting results
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-results
+          path: target/surefire-reports
