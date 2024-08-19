@@ -1,46 +1,33 @@
 package com.callsamu.depsearcher;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
-import org.junit.Test;
+import java.util.Optional;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 public class UserQueryTest {
-  @Test
-  public void shouldParseClassQuery() throws Exception {
-    final UserQuery q = UserQuery.fromString("com.google.inject.Guice");
-    assertEquals(q.toAPIQueryParam(), "c:com.google.inject.Guice");
-    assertTrue(q.getVersion().isEmpty());
+  @ParameterizedTest
+  @CsvSource({
+    "com.google.inject:guice, g:com.google.inject AND a:guice,",
+    "com.google.inject:guice:3.0, g:com.google.inject AND a:guice, 3.0",
+    "com.google.inject.Guice, c:com.google.inject.Guice,",
+    "com.google.inject.Guice:3.0, c:com.google.inject.Guice, 3.0",
+  })
+  public void shouldParseValid(String constructorString, String APIQueryParam, String version) {
+    final UserQuery q = UserQuery.fromString(constructorString);
+
+    assertAll(
+        constructorString + " should parse",
+        () -> assertEquals(q.toAPIQueryParam(), APIQueryParam),
+        () -> assertEquals(q.getVersion(), Optional.ofNullable(version)));
   }
 
-  @Test
-  public void shouldParseGroupAndArtifactQuery() throws Exception {
-    final UserQuery q = UserQuery.fromString("com.google.inject:guice");
-    assertEquals(q.toAPIQueryParam(), "g:com.google.inject AND a:guice");
-    assertTrue(q.getVersion().isEmpty());
-  }
-
-  @Test
-  public void shouldParseFullTextQuery() throws Exception {
-    final UserQuery q = UserQuery.fromString("google guice");
-    assertEquals(q.toAPIQueryParam(), "google guice");
-    assertTrue(q.getVersion().isEmpty());
-  }
-
-  @Test
-  public void shouldParseClassWithVersionQuery() throws Exception {
-    final UserQuery q = UserQuery.fromString("com.google.inject:guice:3.0");
-    assertEquals(q.toAPIQueryParam(), "g:com.google.inject AND a:guice");
-    assertFalse(q.getVersion().isEmpty());
-    assertEquals(q.getVersion().get(), "3.0");
-  }
-
-  @Test
-  public void shouldParseGroupAndArtifactWithVersionQuery() throws Exception {
-    final UserQuery q = UserQuery.fromString("com.google.inject:guice:3.0");
-    assertEquals(q.toAPIQueryParam(), "g:com.google.inject AND a:guice");
-    assertFalse(q.getVersion().isEmpty());
-    assertEquals(q.getVersion().get(), "3.0");
+  @ParameterizedTest
+  @CsvSource({"foo bar:artifact", "foo:bar:foobar:1.0", "com.foo.Class:artifact:1.0"})
+  public void shouldThrowOnInvalid(String constructorString) {
+    assertThrows(IllegalArgumentException.class, () -> UserQuery.fromString(constructorString));
   }
 }

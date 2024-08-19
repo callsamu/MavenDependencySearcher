@@ -1,48 +1,71 @@
 package com.callsamu.depsearcher;
 
+import jakarta.annotation.Nullable;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class UserQuery {
   private String param;
-  private Optional<String> version;
 
-  UserQuery(String param, Optional<String> version) {
+  @Nullable private String version;
+
+  private static Pattern firstPartPattern =
+      Pattern.compile("^(?:[a-z0-9_\\\\-]+\\.)*([a-zA-Z0-9_\\\\-]+)$");
+
+  private enum FirstPartType {
+    FULLCLASS,
+    GROUP,
+    ANY,
+  };
+
+  UserQuery(String param, String version) {
     this.param = param;
     this.version = version;
   }
 
-  public static boolean isGroupId(String s) {
-    final String[] parts = s.split("\\.");
-    final String last = parts[parts.length - 1];
+  private static FirstPartType getFirstPartType(String s) {
+    final Matcher matcher = firstPartPattern.matcher(s);
 
-    return Character.isUpperCase(last.charAt(0));
+    if (!matcher.find()) {
+      return FirstPartType.ANY;
+    }
+
+    final String end = matcher.group(1);
+
+    if (Character.isUpperCase(end.charAt(0))) {
+      return FirstPartType.FULLCLASS;
+    }
+
+    return FirstPartType.GROUP;
   }
 
-  public static UserQuery fromString(String s) throws Exception {
+  public static UserQuery fromString(String s) throws IllegalArgumentException {
     final String[] parts = s.split(":");
 
-    if (isGroupId(parts[0])) {
-      if (parts.length == 1) {
-        return new UserQuery("c:" + parts[0], Optional.empty());
-      }
-      if (parts.length == 2) {
-        return new UserQuery("c:" + parts[0], Optional.of(parts[1]));
-      }
+    switch (parts.length) {
+      case 0:
+        throw new IllegalArgumentException("Empty query string");
+      case 1:
+        return switch (getFirstPartType(parts[0])) {
+          case FULLCLASS -> new UserQuery("c:" + parts[0], null);
+          case GROUP, ANY -> new UserQuery(parts[0], null);
+        };
+      case 2:
+        return switch (getFirstPartType(parts[0])) {
+          case GROUP -> new UserQuery("g:" + parts[0] + " AND a:" + parts[1], null);
+          case FULLCLASS -> new UserQuery("c:" + parts[0], parts[1]);
+          case ANY ->
+              throw new IllegalArgumentException("Invalid full class name or group: " + parts[0]);
+        };
+      case 3:
+        return switch (getFirstPartType(parts[0])) {
+          case GROUP -> new UserQuery("g:" + parts[0] + " AND a:" + parts[1], parts[2]);
+          case ANY, FULLCLASS -> throw new IllegalArgumentException("Invalid group on query: " + s);
+        };
+      default:
+        throw new IllegalArgumentException("Invalid query format: " + s);
     }
-
-    if (parts.length == 1) {
-      return new UserQuery(parts[0], Optional.empty());
-    }
-
-    if (parts.length == 2 || parts.length == 3) {
-      final String q = "" + "g:" + parts[0] + " AND " + "a:" + parts[1];
-
-      final Optional<String> v = parts.length == 2 ? Optional.empty() : Optional.of(parts[2]);
-
-      return new UserQuery(q, v);
-    }
-
-    throw new IllegalArgumentException();
   }
 
   public String toAPIQueryParam() {
@@ -50,6 +73,6 @@ public class UserQuery {
   }
 
   public Optional<String> getVersion() {
-    return this.version;
+    return Optional.ofNullable(this.version);
   }
 }
