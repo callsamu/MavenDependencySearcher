@@ -25,6 +25,7 @@ public class MavenCentralAPIClient {
   }
 
   public List<DependencyData> parse(String json) throws Exception {
+	System.out.println(json);
     JsonNode root = this.mapper.readTree(json);
     JsonNode object = root.get("response").get("docs");
 
@@ -66,7 +67,8 @@ public class MavenCentralAPIClient {
     URI uri =
         UriBuilder.fromUri(this.endpoint)
             .queryParam("q", queryParam)
-            .queryParam("rows", "1")
+            .queryParam("rows", "10")
+			.queryParam("core", "gav")
             .queryParam("wt", "json")
             .build();
 
