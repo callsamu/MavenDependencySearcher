@@ -24,14 +24,14 @@ public class MavenCentralAPIClient {
     this.mapper = new ObjectMapper();
   }
 
-  public DependencyData parse(String json) throws Exception {
+  public List<DependencyData> parse(String json) throws Exception {
     JsonNode root = this.mapper.readTree(json);
     JsonNode object = root.get("response").get("docs");
 
     List<DependencyData> results =
         this.mapper.treeToValue(object, new TypeReference<List<DependencyData>>() {});
 
-    return results.get(0);
+    return results;
   }
 
   private String fetch(URI uri) throws Exception {
@@ -56,10 +56,16 @@ public class MavenCentralAPIClient {
     return response.body();
   }
 
-  public DependencyData get(UserQuery q) throws Exception {
+  public List<DependencyData> get(UserQuery q) throws Exception {
+	final String queryParam = q.toAPIQueryParam();
+
+	if (!queryParam.contains("g:") && !queryParam.contains("a:")) {
+		throw new IllegalArgumentException("Query type not yet supported:" + queryParam);
+	}
+
     URI uri =
         UriBuilder.fromUri(this.endpoint)
-            .queryParam("q", q.toAPIQueryParam())
+            .queryParam("q", queryParam)
             .queryParam("rows", "1")
             .queryParam("wt", "json")
             .build();
