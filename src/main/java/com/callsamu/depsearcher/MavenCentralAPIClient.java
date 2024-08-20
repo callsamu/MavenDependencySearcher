@@ -25,7 +25,6 @@ public class MavenCentralAPIClient {
   }
 
   public List<DependencyData> parse(String json) throws Exception {
-	System.out.println(json);
     JsonNode root = this.mapper.readTree(json);
     JsonNode object = root.get("response").get("docs");
 
@@ -58,17 +57,17 @@ public class MavenCentralAPIClient {
   }
 
   public List<DependencyData> get(UserQuery q) throws Exception {
-	final String queryParam = q.toAPIQueryParam();
+    final String queryParam = q.toAPIQueryParam();
 
-	if (!queryParam.contains("g:") && !queryParam.contains("a:")) {
-		throw new IllegalArgumentException("Query type not yet supported:" + queryParam);
-	}
+    if (!queryParam.contains("g:") && !queryParam.contains("a:")) {
+      throw new IllegalArgumentException("Query type not yet supported:" + queryParam);
+    }
 
     URI uri =
         UriBuilder.fromUri(this.endpoint)
             .queryParam("q", queryParam)
             .queryParam("rows", "10")
-			.queryParam("core", "gav")
+            .queryParam("core", "gav")
             .queryParam("wt", "json")
             .build();
 

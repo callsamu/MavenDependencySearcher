@@ -1,16 +1,12 @@
 package com.callsamu.depsearcher;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.InputStream;
 import java.net.http.HttpClient;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
-
 import okhttp3.HttpUrl;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -47,20 +43,19 @@ public class MavenCentralAPIClientTest {
     final RecordedRequest req = server.takeRequest();
     final HttpUrl reqUrl = req.getRequestUrl();
 
-    final String wantQuery = q.toAPIQueryParam(); 
+    final String wantQuery = q.toAPIQueryParam();
     assertTrue(reqUrl.queryParameter("q").equals(wantQuery));
 
+    final Optional<DependencyData> nonMatchingDep =
+        deps.stream()
+            .filter(dep -> dep.groupId().equals(wantGroup) && dep.artifactId().equals(wantArtifact))
+            .findFirst();
 
-	final Optional<DependencyData> nonMatchingDep = deps.stream()
-		.filter(dep -> 
-			dep.groupId().equals(wantGroup) && 
-			dep.artifactId().equals(wantArtifact)
-		).findFirst();
-
-	final String message = nonMatchingDep.isEmpty() ? 
-		"Non matching dependency found: " + nonMatchingDep.toString() :
-		null;
-	assertFalse(message, nonMatchingDep.isEmpty());
+    final String message =
+        nonMatchingDep.isEmpty()
+            ? "Non matching dependency found: " + nonMatchingDep.toString()
+            : null;
+    assertFalse(message, nonMatchingDep.isEmpty());
 
     server.shutdown();
     server.close();
